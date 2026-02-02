@@ -9,21 +9,23 @@
 
 ## 🚀 快速部署
 
-[![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy%20to-Cloudflare%20Pages-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://dash.cloudflare.com/sign-up/pages)
+### 方式一: Cloudflare Pages (推荐)
 
-**一键部署步骤:**
-1. 点击上方按钮注册/登录 Cloudflare
-2. 进入 **Workers & Pages** → **Create application** → **Pages**
-3. 连接 GitHub 仓库: `iwwx/api-cost-query`
-4. 配置构建:
-   - **Framework preset**: `Vite`
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-5. 点击 **Save and Deploy**
+[![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/iwwx/api-cost-query)
 
-**或使用 Fork 部署:**
+**点击上方按钮即可:**
+- 自动 Fork 仓库到您的 GitHub
+- 自动连接到 Cloudflare Pages
+- 自动配置构建设置
+- 一键完成部署
 
-[![Fork and Deploy](https://img.shields.io/badge/Fork%20&%20Deploy-GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/iwwx/api-cost-query/fork)
+**或手动部署:**
+1. Fork 本仓库
+2. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+3. **Workers & Pages** → **Create application** → **Pages** → **Connect to Git**
+4. 选择 `api-cost-query` 仓库
+5. 构建配置会自动读取 `wrangler.toml`
+6. 点击 **Save and Deploy**
 
 ---
 
