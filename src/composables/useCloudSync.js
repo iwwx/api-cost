@@ -71,6 +71,14 @@ export function useCloudSync(key, defaultValue, options = {}) {
   const syncFromCloud = async () => {
     if (!cloudSyncEnabled.value) return
 
+    // 防止无限刷新: 检查是否刚刚刷新过 (5秒内)
+    const lastReloadTime = parseInt(window.localStorage.getItem('_last_reload_time')) || 0
+    const now = Date.now()
+    if (now - lastReloadTime < 5000) {
+      console.log('[CloudSync] Just reloaded, skipping sync to prevent infinite loop')
+      return
+    }
+
     syncing.value = true
     syncError.value = null
 
@@ -136,6 +144,8 @@ export function useCloudSync(key, defaultValue, options = {}) {
 
       if (hasChanges) {
         console.log('[CloudSync] Data updated from cloud, reloading page...')
+        // 记录刷新时间,防止无限循环
+        window.localStorage.setItem('_last_reload_time', Date.now().toString())
         // 等待一小段时间确保 localStorage 写入完成
         setTimeout(() => {
           window.location.reload()
@@ -165,8 +175,10 @@ export function useCloudSync(key, defaultValue, options = {}) {
 
   // 定时从云端拉取更新
   if (cloudSyncEnabled.value && autoSync) {
-    // 首次启动时立即拉取一次
-    syncFromCloud()
+    // 延迟首次拉取,避免页面刚加载就触发刷新
+    setTimeout(() => {
+      syncFromCloud()
+    }, 2000) // 2秒后首次拉取
 
     // 然后定时拉取
     setInterval(() => {
