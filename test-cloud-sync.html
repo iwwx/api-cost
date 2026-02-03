@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>云端同步功能测试</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .status.syncing {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+    .status.synced {
+      background: #e8f5e9;
+      color: #388e3c;
+    }
+    .status.error {
+      background: #ffebee;
+      color: #d32f2f;
+    }
+    .section {
+      margin-bottom: 30px;
+    }
+    .section h2 {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 15px;
+    }
+    .info-box {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    button {
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background: #1565c0;
+    }
+    button.secondary {
+      background: #757575;
+    }
+    button.secondary:hover {
+      background: #616161;
+    }
+    button.danger {
+      background: #d32f2f;
+    }
+    button.danger:hover {
+      background: #c62828;
+    }
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      resize: vertical;
+    }
+    .log {
+      background: #263238;
+      color: #aed581;
+      padding: 15px;
+      border-radius: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+      margin-top: 15px;
+    }
+    .log-entry {
+      margin-bottom: 5px;
+    }
+    .log-time {
+      color: #64b5f6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 云端同步功能测试</h1>
+    <div id="status" class="status syncing">
+      <span>⏳</span>
+      <span id="status-text">初始化中...</span>
+    </div>
+
+    <!-- 设备信息 -->
+    <div class="section">
+      <h2>📱 设备信息</h2>
+      <div class="info-box">
+        <div><strong>设备 ID:</strong> <span id="device-id">加载中...</span></div>
+        <div><strong>云端同步:</strong> <span id="sync-enabled">加载中...</span></div>
+        <div><strong>上次同步:</strong> <span id="last-sync">从未同步</span></div>
+      </div>
+      <button onclick="copyDeviceId()">复制设备 ID</button>
+      <button class="secondary" onclick="generateNewDeviceId()">生成新设备 ID</button>
+    </div>
+
+    <!-- 测试数据 -->
+    <div class="section">
+      <h2>📝 测试数据</h2>
+      <textarea id="test-data" rows="8" placeholder="输入测试数据 (JSON 格式)...">
+{
+  "platform-presets": {
+    "custom": [
+      { "id": "test-1", "name": "测试平台", "url": "https://api.test.com" }
+    ],
+    "builtInOverrides": {}
+  },
+  "api-urls": ["https://api.openai.com"],
+  "api-keys": ["sk-test-key"]
+}
+      </textarea>
+      <button onclick="uploadTestData()">上传到云端</button>
+      <button class="secondary" onclick="downloadFromCloud()">从云端下载</button>
+      <button class="danger" onclick="clearCloudData()">清除云端数据</button>
+    </div>
+
+    <!-- 自定义同步码 -->
+    <div class="section">
+      <h2>🔑 自定义同步码</h2>
+      <input type="text" id="custom-sync-code" placeholder="至少 8 个字符" style="width: 300px; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+      <button onclick="setCustomSyncCode()">设置同步码</button>
+    </div>
+
+    <!-- 日志 -->
+    <div class="section">
+      <h2>📋 操作日志</h2>
+      <div id="log" class="log"></div>
+      <button class="secondary" onclick="clearLog()">清除日志</button>
+    </div>
+  </div>
+
+  <script type="module">
+    // 模拟 deviceId.js
+    async function generateDeviceId() {
+      const stored = localStorage.getItem('_device_id')
+      if (stored) return stored
+
+      const fingerprint = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width + 'x' + screen.height,
+        new Date().getTimezoneOffset().toString(),
+        navigator.hardwareConcurrency?.toString() || '0'
+      ].join('|')
+
+      const hashBuffer = await crypto.subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode(fingerprint)
+      )
+
+      const hashArray = Array.from(new Uint8Array(hashBuffer))
+      const deviceId = hashArray
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
+        .substring(0, 32)
+
+      localStorage.setItem('_device_id', deviceId)
+      return deviceId
+    }
+
+    async function getDeviceId() {
+      return await generateDeviceId()
+    }
+
+    // 模拟 cloudApi.js
+    const API_ENDPOINT = '/api/sync'
+
+    async function uploadToCloud(data) {
+      const deviceId = await getDeviceId()
+
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Device-ID': deviceId
+        },
+        body: JSON.stringify(data)
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Upload failed')
+      }
+
+      return await response.json()
+    }
+
+    async function downloadFromCloudAPI() {
+      const deviceId = await getDeviceId()
+
+      const response = await fetch(API_ENDPOINT, {
+        method: 'GET',
+        headers: {
+          'X-Device-ID': deviceId
+        }
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Download failed')
+      }
+
+      return await response.json()
+    }
+
+    async function clearCloudDataAPI() {
+      const deviceId = await getDeviceId()
+
+      const response = await fetch(API_ENDPOINT, {
+        method: 'DELETE',
+        headers: {
+          'X-Device-ID': deviceId
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Clear failed')
+      }
+
+      return await response.json()
+    }
+
+    // UI 控制
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log')
+      const time = new Date().toLocaleTimeString()
+      const entry = document.createElement('div')
+      entry.className = 'log-entry'
+      entry.innerHTML = `<span class="log-time">[${time}]</span> ${message}`
+      logDiv.appendChild(entry)
+      logDiv.scrollTop = logDiv.scrollHeight
+    }
+
+    function setStatus(status, text) {
+      const statusDiv = document.getElementById('status')
+      const statusText = document.getElementById('status-text')
+
+      statusDiv.className = `status ${status}`
+      statusText.textContent = text
+
+      if (status === 'syncing') {
+        statusDiv.innerHTML = '<span>⏳</span><span>' + text + '</span>'
+      } else if (status === 'synced') {
+        statusDiv.innerHTML = '<span>✅</span><span>' + text + '</span>'
+      } else if (status === 'error') {
+        statusDiv.innerHTML = '<span>❌</span><span>' + text + '</span>'
+      }
+    }
+
+    async function init() {
+      const deviceId = await getDeviceId()
+      document.getElementById('device-id').textContent = deviceId
+
+      const syncEnabled = localStorage.getItem('_cloud_sync_enabled') !== 'false'
+      document.getElementById('sync-enabled').textContent = syncEnabled ? '✅ 已启用' : '❌ 已禁用'
+
+      setStatus('synced', '准备就绪')
+      log('✅ 初始化完成')
+      log(`📱 设备 ID: ${deviceId}`)
+    }
+
+    // 暴露到全局
+    window.copyDeviceId = async function() {
+      const deviceId = await getDeviceId()
+      await navigator.clipboard.writeText(deviceId)
+      log('📋 设备 ID 已复制到剪贴板')
+    }
+
+    window.generateNewDeviceId = function() {
+      if (confirm('确定要生成新的设备 ID 吗?\n这将导致无法访问旧设备的云端数据。')) {
+        localStorage.removeItem('_device_id')
+        location.reload()
+      }
+    }
+
+    window.uploadTestData = async function() {
+      try {
+        setStatus('syncing', '上传中...')
+        log('⬆️ 开始上传数据...')
+
+        const data = JSON.parse(document.getElementById('test-data').value)
+        const result = await uploadToCloud(data)
+
+        setStatus('synced', '上传成功')
+        log(`✅ 上传成功! 时间戳: ${result.timestamp}`)
+
+        document.getElementById('last-sync').textContent = new Date(result.timestamp).toLocaleString()
+      } catch (error) {
+        setStatus('error', '上传失败')
+        log(`❌ 上传失败: ${error.message}`)
+      }
+    }
+
+    window.downloadFromCloud = async function() {
+      try {
+        setStatus('syncing', '下载中...')
+        log('⬇️ 开始下载数据...')
+
+        const data = await downloadFromCloudAPI()
+
+        setStatus('synced', '下载成功')
+        log('✅ 下载成功!')
+
+        document.getElementById('test-data').value = JSON.stringify(data, null, 2)
+
+        if (data._meta) {
+          document.getElementById('last-sync').textContent = new Date(data._meta.lastSync).toLocaleString()
+        }
+      } catch (error) {
+        setStatus('error', '下载失败')
+        log(`❌ 下载失败: ${error.message}`)
+      }
+    }
+
+    window.clearCloudData = async function() {
+      if (!confirm('确定要清除云端数据吗?\n此操作无法撤销。')) return
+
+      try {
+        setStatus('syncing', '清除中...')
+        log('🗑️ 清除云端数据...')
+
+        await clearCloudDataAPI()
+
+        setStatus('synced', '清除成功')
+        log('✅ 云端数据已清除')
+
+        document.getElementById('last-sync').textContent = '从未同步'
+      } catch (error) {
+        setStatus('error', '清除失败')
+        log(`❌ 清除失败: ${error.message}`)
+      }
+    }
+
+    window.setCustomSyncCode = function() {
+      const code = document.getElementById('custom-sync-code').value
+
+      if (!code || code.length < 8) {
+        alert('同步码至少需要 8 个字符')
+        return
+      }
+
+      localStorage.setItem('_device_id', code)
+      log(`🔑 同步码已设置: ${code}`)
+      alert('同步码已设置,页面将刷新')
+      location.reload()
+    }
+
+    window.clearLog = function() {
+      document.getElementById('log').innerHTML = ''
+      log('🧹 日志已清除')
+    }
+
+    // 初始化
+    init()
+  </script>
+</body>
+</html>
