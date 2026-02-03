@@ -104,6 +104,7 @@ const queryBalanceData = async (url, keys) => {
           total: result.data.total,
           used: result.data.used,
           remaining: result.data.remaining,
+          expiresAt: result.data.expiresAt,
           usagePercent: result.data.total > 0
             ? (result.data.used / result.data.total) * 100
             : 0,

@@ -67,10 +67,13 @@ export async function queryBalance(baseUrl, apiKey) {
     if (subscriptionData && usageData) {
       const total = subscriptionData.hard_limit_usd || 0
       const used = usageData.total_usage ? usageData.total_usage / 100 : 0 // 通常返回的是分,需要除以100
+      const expiresAt = subscriptionData.access_until || subscriptionData.expires_at || null
+
       return {
         total,
         used,
         remaining: total - used,
+        expiresAt,
         currency: 'USD'
       }
     }
@@ -79,10 +82,13 @@ export async function queryBalance(baseUrl, apiKey) {
     if (subscriptionData) {
       const total = subscriptionData.hard_limit_usd || subscriptionData.system_hard_limit_usd || 0
       const used = subscriptionData.soft_limit_usd || 0
+      const expiresAt = subscriptionData.access_until || subscriptionData.expires_at || null
+
       return {
         total,
         used,
         remaining: total - used,
+        expiresAt,
         currency: 'USD'
       }
     }
@@ -94,10 +100,13 @@ export async function queryBalance(baseUrl, apiKey) {
     if (balanceData) {
       const total = balanceData.total_granted || balanceData.total_available || 0
       const used = balanceData.total_used || 0
+      const expiresAt = balanceData.expires_at || balanceData.access_until || balanceData.expiry_time || null
+
       return {
         total,
         used,
         remaining: balanceData.total_available || (total - used),
+        expiresAt,
         currency: 'USD'
       }
     }

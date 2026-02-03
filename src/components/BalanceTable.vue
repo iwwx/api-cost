@@ -93,10 +93,27 @@
             </div>
           </div>
 
-          <!-- 额外信息 -->
-          <div v-if="balance.expiresAt" class="pt-2 border-t border-border">
-            <p class="text-xs text-text-secondary">
-              到期时间: {{ formatDate(balance.expiresAt) }}
+          <!-- 访问权限截止时间 -->
+          <div v-if="balance.expiresAt" class="pt-3 border-t border-border">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-text-secondary">访问截止</span>
+              <div class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" :class="isExpired(balance.expiresAt) ? 'text-error' : isExpiringSoon(balance.expiresAt) ? 'text-orange-500' : 'text-text-secondary'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span
+                  class="text-xs font-medium"
+                  :class="isExpired(balance.expiresAt) ? 'text-error' : isExpiringSoon(balance.expiresAt) ? 'text-orange-500' : 'text-text-primary'"
+                >
+                  {{ formatDate(balance.expiresAt) }}
+                </span>
+              </div>
+            </div>
+            <p v-if="isExpired(balance.expiresAt)" class="text-xs text-error mt-1">
+              ⚠️ 已过期
+            </p>
+            <p v-else-if="isExpiringSoon(balance.expiresAt)" class="text-xs text-orange-500 mt-1">
+              ⚠️ 即将到期
             </p>
           </div>
         </div>
@@ -147,7 +164,22 @@ const formatDate = (timestamp) => {
   return date.toLocaleDateString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit'
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
   })
+}
+
+const isExpired = (timestamp) => {
+  if (!timestamp) return false
+  return Date.now() > timestamp * 1000
+}
+
+const isExpiringSoon = (timestamp) => {
+  if (!timestamp) return false
+  const now = Date.now()
+  const expiryTime = timestamp * 1000
+  const daysUntilExpiry = (expiryTime - now) / (1000 * 60 * 60 * 24)
+  return daysUntilExpiry > 0 && daysUntilExpiry <= 7 // 7天内到期
 }
 </script>
