@@ -75,7 +75,7 @@ export function useCloudSync(key, defaultValue, options = {}) {
         const cloudTime = cloudData._meta.lastSync
         const localTime = lastSyncTime.value || 0
 
-        if (cloudTime <= localTime) {
+        if (cloudTime < localTime) {
           console.log('[CloudSync] Local data is up to date')
           return
         }
@@ -118,6 +118,10 @@ export function useCloudSync(key, defaultValue, options = {}) {
 
   // 定时从云端拉取更新
   if (cloudSyncEnabled.value && autoSync) {
+    // 首次启动时立即拉取一次
+    syncFromCloud()
+
+    // 然后定时拉取
     setInterval(() => {
       syncFromCloud()
     }, syncInterval)
