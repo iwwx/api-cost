@@ -68,15 +68,18 @@ export function useCloudSync(key, defaultValue, options = {}) {
   }
 
   // 从云端下载
-  const syncFromCloud = async () => {
+  const syncFromCloud = async (forceSync = false) => {
     if (!cloudSyncEnabled.value) return
 
     // 防止无限刷新: 检查是否刚刚刷新过 (5秒内)
-    const lastReloadTime = parseInt(window.localStorage.getItem('_last_reload_time')) || 0
-    const now = Date.now()
-    if (now - lastReloadTime < 5000) {
-      console.log('[CloudSync] Just reloaded, skipping sync to prevent infinite loop')
-      return
+    // 但如果是定时触发的同步 (forceSync=true),则允许
+    if (!forceSync) {
+      const lastReloadTime = parseInt(window.localStorage.getItem('_last_reload_time')) || 0
+      const now = Date.now()
+      if (now - lastReloadTime < 5000) {
+        console.log('[CloudSync] Just reloaded, skipping sync to prevent infinite loop')
+        return
+      }
     }
 
     syncing.value = true
@@ -177,12 +180,12 @@ export function useCloudSync(key, defaultValue, options = {}) {
   if (cloudSyncEnabled.value && autoSync) {
     // 延迟首次拉取,避免页面刚加载就触发刷新
     setTimeout(() => {
-      syncFromCloud()
-    }, 2000) // 2秒后首次拉取
+      syncFromCloud(true) // forceSync=true,忽略防护期
+    }, 6000) // 6秒后首次拉取 (超过5秒防护期)
 
     // 然后定时拉取
     setInterval(() => {
-      syncFromCloud()
+      syncFromCloud(true) // forceSync=true,允许定时同步
     }, syncInterval)
   }
 
