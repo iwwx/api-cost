@@ -18,6 +18,8 @@ export function parseApiInfo(text) {
 
   // 正则表达式模式
   const urlPatterns = [
+    // 匹配环境变量格式: export XXX_URL="..." 或 XXX_URL=...
+    /(?:export\s+)?[A-Z_]*(?:BASE_?URL|URL|ENDPOINT|API)[A-Z_]*\s*=\s*["']?(https?:\/\/[^\s,，;；"']+)["']?/i,
     // 匹配 "Base URL:", "URL:", "API:", "地址:", "接口:" 等标签后的 URL
     /(?:base\s*url|url|api|endpoint|地址|接口|base\s*path|api\s*url|api\s*endpoint)[\s:：]*[=]?\s*["']?(https?:\/\/[^\s,，;；"']+)["']?/i,
     // 匹配纯 URL (必须是 https?:// 开头)
@@ -25,6 +27,8 @@ export function parseApiInfo(text) {
   ]
 
   const keyPatterns = [
+    // 匹配环境变量格式: export XXX_KEY="..." 或 XXX_TOKEN=...
+    /(?:export\s+)?[A-Z_]*(?:KEY|TOKEN|SECRET|AUTH)[A-Z_]*\s*=\s*["']?([a-zA-Z0-9._-]{20,})["']?/i,
     // 匹配 "key:", "API Key:", "token:", "密钥:" 等标签后的密钥
     /(?:api[\s_-]?key|key|token|secret|密钥|令牌|authorization)[\s:：]*[=]?\s*["']?([a-zA-Z0-9._-]{20,}|sk-[a-zA-Z0-9_-]+|Bearer\s+[a-zA-Z0-9._-]+)["']?/i,
     // 匹配 sk- 开头的密钥
