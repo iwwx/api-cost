@@ -1,27 +1,25 @@
 <template>
-  <Teleport to="body">
-    <Transition name="toast">
-      <div
-        class="fixed bottom-8 right-8 z-50 min-w-[300px] max-w-md px-6 py-4 rounded-default shadow-lg"
-        :class="typeClass"
-      >
-        <div class="flex items-start gap-3">
-          <div class="flex-shrink-0 text-xl">{{ icon }}</div>
-          <div class="flex-1">
-            <p class="font-medium">{{ message }}</p>
-          </div>
-          <button
-            @click="$emit('close')"
-            class="flex-shrink-0 text-white/80 hover:text-white"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+  <Transition name="toast">
+    <div
+      class="min-w-[300px] max-w-md px-6 py-4 rounded-default shadow-lg"
+      :class="typeClass"
+    >
+      <div class="flex items-start gap-3">
+        <div class="flex-shrink-0 text-xl">{{ icon }}</div>
+        <div class="flex-1">
+          <p class="font-medium">{{ message }}</p>
         </div>
+        <button
+          @click="$emit('close')"
+          class="flex-shrink-0 text-white/80 hover:text-white"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
-    </Transition>
-  </Teleport>
+    </div>
+  </Transition>
 </template>
 
 <script setup>

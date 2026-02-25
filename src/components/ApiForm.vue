@@ -388,7 +388,9 @@ const handleQuery = () => {
   loading.value = true
   const normalize = u => u.replace(/\/+$/, '')
   const matchedPreset = presets.value.find(p => normalize(p.url) === normalize(apiUrl.value))
-  const platform = matchedPreset ? matchedPreset.name : new URL(apiUrl.value).hostname
+  const platform = matchedPreset
+    ? matchedPreset.name
+    : (() => { try { return new URL(apiUrl.value).hostname } catch { return apiUrl.value } })()
 
   emit('query', {
     url: apiUrl.value,

@@ -26,7 +26,7 @@
       />
 
       <!-- Toast 通知容器 -->
-      <div class="fixed bottom-8 right-8 z-50 space-y-3">
+      <div class="fixed bottom-8 right-8 z-50 flex flex-col-reverse gap-3">
         <Toast
           v-for="toast in toasts"
           :key="toast.id"
@@ -61,17 +61,10 @@ const models = ref([])
 const balanceLoading = ref(false)
 const modelsLoading = ref(false)
 
-// 当前查询配置
-let currentApiUrl = ''
-let currentApiKeys = []
-
 /**
  * 处理查询请求
  */
 const handleQuery = async ({ url, keys, platform }) => {
-  currentApiUrl = url
-  currentApiKeys = keys
-
   // 重置数据
   balances.value = []
   models.value = []

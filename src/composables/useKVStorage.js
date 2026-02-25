@@ -11,6 +11,7 @@ export function useKVStorage(key, defaultValue = null) {
   const loading = ref(false)
   const error = ref(null)
   let isInitializing = false
+  let debounceTimer = null
 
   // 从 KV 加载初始数据
   const loadData = async () => {
@@ -30,10 +31,14 @@ export function useKVStorage(key, defaultValue = null) {
         // KV 中没有数据,尝试从 LocalStorage 读取
         const localData = window.localStorage.getItem(key)
         if (localData) {
-          storedValue.value = JSON.parse(localData)
+          try {
+            storedValue.value = JSON.parse(localData)
+          } catch {
+            storedValue.value = JSON.parse(JSON.stringify(defaultValue))
+          }
           console.log('[KV] No KV data, using local cache:', key)
         } else {
-          storedValue.value = defaultValue
+          storedValue.value = JSON.parse(JSON.stringify(defaultValue))
         }
       }
     } catch (err) {
@@ -43,9 +48,13 @@ export function useKVStorage(key, defaultValue = null) {
       // 降级到 LocalStorage
       const localData = window.localStorage.getItem(key)
       if (localData) {
-        storedValue.value = JSON.parse(localData)
+        try {
+          storedValue.value = JSON.parse(localData)
+        } catch {
+          storedValue.value = JSON.parse(JSON.stringify(defaultValue))
+        }
       } else {
-        storedValue.value = defaultValue
+        storedValue.value = JSON.parse(JSON.stringify(defaultValue))
       }
     } finally {
       loading.value = false
@@ -57,13 +66,21 @@ export function useKVStorage(key, defaultValue = null) {
   const saveData = async () => {
     try {
       // 收集所有数据
+      const getLocalData = (k, fallback) => {
+        try {
+          return JSON.parse(window.localStorage.getItem(k) || fallback)
+        } catch {
+          return JSON.parse(fallback)
+        }
+      }
+
       const allData = {
         'platform-presets': key === 'platform-presets'
           ? storedValue.value
-          : JSON.parse(window.localStorage.getItem('platform-presets') || '{"custom":[],"builtInOverrides":{}}'),
+          : getLocalData('platform-presets', '{"custom":[],"builtInOverrides":{}}'),
         'api-history': key === 'api-history'
           ? storedValue.value
-          : JSON.parse(window.localStorage.getItem('api-history') || '[]')
+          : getLocalData('api-history', '[]')
       }
 
       await saveToKV(allData)
@@ -81,10 +98,16 @@ export function useKVStorage(key, defaultValue = null) {
     }
   }
 
-  // 监听数据变化,立即保存到 KV
+  // 防抖保存
+  const debouncedSave = () => {
+    if (debounceTimer) clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(saveData, 300)
+  }
+
+  // 监听数据变化,防抖保存到 KV
   watch(storedValue, () => {
     if (isInitializing) return
-    saveData()
+    debouncedSave()
   }, { deep: true })
 
   // 工具方法
@@ -107,7 +130,7 @@ export function useKVStorage(key, defaultValue = null) {
   }
 
   const clear = () => {
-    storedValue.value = defaultValue
+    storedValue.value = JSON.parse(JSON.stringify(defaultValue))
   }
 
   // 页面加载时从 KV 读取

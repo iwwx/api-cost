@@ -6,10 +6,6 @@
   body {
     @apply bg-bg-primary text-text-primary font-sans antialiased;
   }
-
-  * {
-    @apply transition-all duration-200 ease-smooth;
-  }
 }
 
 @layer components {

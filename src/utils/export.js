@@ -63,33 +63,3 @@ function downloadBlob(blob, filename) {
   // 释放 URL 对象
   setTimeout(() => URL.revokeObjectURL(url), 100)
 }
-
-/**
- * 复制文本到剪贴板
- * @param {string} text - 要复制的文本
- * @returns {Promise<boolean>} 是否成功
- */
-export async function copyToClipboard(text) {
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text)
-      return true
-    } else {
-      // 降级方案: 使用 execCommand
-      const textarea = document.createElement('textarea')
-      textarea.value = text
-      textarea.style.position = 'fixed'
-      textarea.style.left = '-999999px'
-      textarea.style.top = '-999999px'
-      document.body.appendChild(textarea)
-      textarea.focus()
-      textarea.select()
-      const success = document.execCommand('copy')
-      document.body.removeChild(textarea)
-      return success
-    }
-  } catch (error) {
-    console.error('复制失败:', error)
-    return false
-  }
-}
