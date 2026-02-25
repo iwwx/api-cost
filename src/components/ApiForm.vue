@@ -167,11 +167,10 @@
         <div class="relative">
           <textarea
             v-model="apiKeys"
-            :type="showKeys ? 'text' : 'password'"
             placeholder="sk-proj-..."
             rows="4"
             class="input-field font-mono text-sm"
-            :class="{ 'border-error': keyError }"
+            :class="{ 'border-error': keyError, 'mask-text': !showKeys }"
             @blur="validateKeys"
           ></textarea>
           <button
@@ -264,7 +263,6 @@ const {
 
 // 对话框状态
 const showPresetDialog = ref(false)
-const showSyncSettings = ref(false)
 const presetDialogMode = ref('create')
 const editingPreset = ref(null)
 
@@ -392,11 +390,6 @@ const handleQuery = () => {
     url: apiUrl.value,
     keys: apiKeys.value.split('\n').filter(k => k.trim())
   })
-
-  // 模拟查询完成 (实际由父组件控制)
-  setTimeout(() => {
-    loading.value = false
-  }, 100)
 }
 
 // 历史记录操作
@@ -539,3 +532,10 @@ defineExpose({
   setLoading: (value) => { loading.value = value }
 })
 </script>
+
+<style scoped>
+.mask-text {
+  color: transparent;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}
+</style>

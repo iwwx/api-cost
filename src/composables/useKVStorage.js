@@ -10,11 +10,13 @@ export function useKVStorage(key, defaultValue = null) {
   const storedValue = ref(defaultValue)
   const loading = ref(false)
   const error = ref(null)
+  let isInitializing = false
 
   // 从 KV 加载初始数据
   const loadData = async () => {
     loading.value = true
     error.value = null
+    isInitializing = true
 
     try {
       const kvData = await loadFromKV()
@@ -47,6 +49,7 @@ export function useKVStorage(key, defaultValue = null) {
       }
     } finally {
       loading.value = false
+      isInitializing = false
     }
   }
 
@@ -80,6 +83,7 @@ export function useKVStorage(key, defaultValue = null) {
 
   // 监听数据变化,立即保存到 KV
   watch(storedValue, () => {
+    if (isInitializing) return
     saveData()
   }, { deep: true })
 

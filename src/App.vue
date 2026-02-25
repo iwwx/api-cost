@@ -132,10 +132,13 @@ const queryModelsData = async (url, keys) => {
   modelsLoading.value = true
 
   try {
+    let querySucceeded = false
+
     for (const key of keys) {
       try {
         const modelList = await queryModels(url, key)
         models.value = modelList.map(m => m.id || m.name || m).sort()
+        querySucceeded = true
         break // 成功后退出循环
       } catch (err) {
         console.warn(`使用 Key ${key.slice(0, 10)}... 查询模型失败:`, err)
@@ -143,7 +146,7 @@ const queryModelsData = async (url, keys) => {
       }
     }
 
-    if (models.value.length === 0) {
+    if (!querySucceeded) {
       showError('所有密钥均无法获取模型列表')
     }
   } catch (err) {
