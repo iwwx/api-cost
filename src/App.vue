@@ -68,7 +68,7 @@ let currentApiKeys = []
 /**
  * 处理查询请求
  */
-const handleQuery = async ({ url, keys }) => {
+const handleQuery = async ({ url, keys, platform }) => {
   currentApiUrl = url
   currentApiKeys = keys
 
@@ -78,7 +78,7 @@ const handleQuery = async ({ url, keys }) => {
 
   // 并发查询余额和模型
   await Promise.all([
-    queryBalanceData(url, keys),
+    queryBalanceData(url, keys, platform),
     queryModelsData(url, keys)
   ])
 
@@ -91,7 +91,7 @@ const handleQuery = async ({ url, keys }) => {
 /**
  * 查询余额
  */
-const queryBalanceData = async (url, keys) => {
+const queryBalanceData = async (url, keys, platform) => {
   balanceLoading.value = true
 
   try {
@@ -108,13 +108,13 @@ const queryBalanceData = async (url, keys) => {
           usagePercent: result.data.total > 0
             ? (result.data.used / result.data.total) * 100
             : 0,
-          platform: detectPlatform(url)
+          platform
         }
       } else {
         return {
           key: result.key,
           error: result.error,
-          platform: detectPlatform(url)
+          platform
         }
       }
     })
@@ -154,22 +154,6 @@ const queryModelsData = async (url, keys) => {
   } finally {
     modelsLoading.value = false
   }
-}
-
-/**
- * 检测 API 平台
- */
-const detectPlatform = (url) => {
-  const hostname = new URL(url).hostname.toLowerCase()
-
-  if (hostname.includes('openai')) return 'OpenAI'
-  if (hostname.includes('siliconflow')) return '硅基流动'
-  if (hostname.includes('deepseek')) return 'DeepSeek'
-  if (hostname.includes('cloudflare')) return 'Cloudflare'
-  if (hostname.includes('moonshot')) return '月之暗面'
-  if (hostname.includes('bigmodel')) return '智谱AI'
-
-  return '未知平台'
 }
 
 /**
